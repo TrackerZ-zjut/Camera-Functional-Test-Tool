@@ -1,0 +1,15 @@
+Camera Test Report
+Date: 2025-02-24 14:53:47
+
+Resolution Test: Pass
+Details: Set: 640x480, Actual: 640x480
+
+FPS Test: Fail
+Details: FPS: 13.80
+
+Image Quality Test: Pass
+Details: Image saved as test_image.jpg
+
+Focus Test: Fail
+Details: Focus Value: 83.33
+
