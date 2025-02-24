@@ -1,7 +1,10 @@
 import cv2
 import time
 import os
+import csv
 from jinja2 import Template
+import tkinter as tk
+from tkinter import ttk, messagebox
 
 # 测试报告模板
 HTML_TEMPLATE = """
@@ -75,8 +78,16 @@ def test_camera_focus(cap):
         return cv2.Laplacian(gray, cv2.CV_64F).var()
     return 0
 
+def test_camera_exposure(cap, exposure_value):
+    """测试摄像头曝光"""
+    cap.set(cv2.CAP_PROP_EXPOSURE, exposure_value)
+    ret, frame = cap.read()
+    if ret:
+        return True
+    return False
+
 def generate_report(test_results, test_date, output_dir="reports"):
-    """生成测试报告"""
+    """生成测试报告（HTML、文本、CSV）"""
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
@@ -92,29 +103,44 @@ def generate_report(test_results, test_date, output_dir="reports"):
         for item in test_results:
             f.write(f"{item['name']}: {item['result']}\nDetails: {item['details']}\n\n")
 
-def main():
+    # 生成CSV报告
+    with open(os.path.join(output_dir, "camera_test_report.csv"), "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["Test Item", "Result", "Details"])
+        for item in test_results:
+            writer.writerow([item["name"], item["result"], item["details"]])
+
+def run_tests():
+    """执行测试"""
+    # 获取用户输入的标准
+    resolution_width = int(resolution_width_entry.get())
+    resolution_height = int(resolution_height_entry.get())
+    min_fps = float(min_fps_entry.get())
+    min_focus = float(min_focus_entry.get())
+    exposure_value = float(exposure_entry.get())
+
     # 打开默认摄像头
     cap = cv2.VideoCapture(0)
     if not cap.isOpened():
-        print("无法打开摄像头")
+        messagebox.showerror("Error", "无法打开摄像头")
         return
 
     test_results = []
     test_date = time.strftime("%Y-%m-%d %H:%M:%S")
 
     # 测试分辨率
-    width, height = test_camera_resolution(cap, 640, 480)
+    width, height = test_camera_resolution(cap, resolution_width, resolution_height)
     test_results.append({
         "name": "Resolution Test",
-        "result": "Pass" if width == 640 and height == 480 else "Fail",
-        "details": f"Set: 640x480, Actual: {width}x{height}"
+        "result": "Pass" if width == resolution_width and height == resolution_height else "Fail",
+        "details": f"Set: {resolution_width}x{resolution_height}, Actual: {width}x{height}"
     })
 
     # 测试帧率
     fps = test_camera_fps(cap)
     test_results.append({
         "name": "FPS Test",
-        "result": "Pass" if fps > 20 else "Fail",
+        "result": "Pass" if fps >= min_fps else "Fail",
         "details": f"FPS: {fps:.2f}"
     })
 
@@ -136,16 +162,67 @@ def main():
     focus_value = test_camera_focus(cap)
     test_results.append({
         "name": "Focus Test",
-        "result": "Pass" if focus_value > 500 else "Fail",
+        "result": "Pass" if focus_value >= min_focus else "Fail",
         "details": f"Focus Value: {focus_value:.2f}"
     })
+
+    # 测试曝光
+    if test_camera_exposure(cap, exposure_value):
+        test_results.append({
+            "name": "Exposure Test",
+            "result": "Pass",
+            "details": f"Exposure Value: {exposure_value}"
+        })
+    else:
+        test_results.append({
+            "name": "Exposure Test",
+            "result": "Fail",
+            "details": "Failed to set exposure"
+        })
 
     # 生成报告
     generate_report(test_results, test_date)
 
     # 释放摄像头
     cap.release()
-    print("测试完成，报告已生成。")
+    messagebox.showinfo("Success", "测试完成，报告已生成。")
 
-if __name__ == "__main__":
-    main()
+# 创建GUI界面
+root = tk.Tk()
+root.title("Camera Test Tool")
+root.geometry("400x300")
+
+# 分辨率测试标准
+ttk.Label(root, text="分辨率宽度:").grid(row=0, column=0, padx=10, pady=5)
+resolution_width_entry = ttk.Entry(root)
+resolution_width_entry.grid(row=0, column=1, padx=10, pady=5)
+resolution_width_entry.insert(0, "640")
+
+ttk.Label(root, text="分辨率高度:").grid(row=1, column=0, padx=10, pady=5)
+resolution_height_entry = ttk.Entry(root)
+resolution_height_entry.grid(row=1, column=1, padx=10, pady=5)
+resolution_height_entry.insert(0, "480")
+
+# 帧率测试标准
+ttk.Label(root, text="最小帧率 (FPS):").grid(row=2, column=0, padx=10, pady=5)
+min_fps_entry = ttk.Entry(root)
+min_fps_entry.grid(row=2, column=1, padx=10, pady=5)
+min_fps_entry.insert(0, "20")
+
+# 对焦测试标准
+ttk.Label(root, text="最小对焦值:").grid(row=3, column=0, padx=10, pady=5)
+min_focus_entry = ttk.Entry(root)
+min_focus_entry.grid(row=3, column=1, padx=10, pady=5)
+min_focus_entry.insert(0, "500")
+
+# 曝光测试标准
+ttk.Label(root, text="曝光值:").grid(row=4, column=0, padx=10, pady=5)
+exposure_entry = ttk.Entry(root)
+exposure_entry.grid(row=4, column=1, padx=10, pady=5)
+exposure_entry.insert(0, "0")
+
+# 执行测试按钮
+run_button = ttk.Button(root, text="Run Tests", command=run_tests)
+run_button.grid(row=5, column=0, columnspan=2, pady=10)
+
+root.mainloop()
