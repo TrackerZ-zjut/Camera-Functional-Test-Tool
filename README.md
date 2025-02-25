@@ -15,12 +15,16 @@
 - 基于GUI的配置界面，操作简单。  
 - 生成详细的测试报告和分析。  
 
-## 安装
+## 使用方法
 1. 克隆仓库：
    ```bash
    git clone https://github.com/TrackerZ-zjut/Camera-Functional-Test-Tool.git
-2. 安装依赖  
-   pip install -r requirements.txt  
+2. 安装依赖   
+   ```
+   pip install -r requirements.txt
+4. 运行脚本     
+   ```
+   python src/main.py
 ## 项目结构
 1. 主程序  
   camera_test_tool.py     
@@ -30,4 +34,4 @@
      camera_test_report.csv  
 3. 测试图像  
   test_image.jpg
-4. .gitignore
+
