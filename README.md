@@ -21,13 +21,13 @@
    git clone https://github.com/TrackerZ-zjut/Camera-Functional-Test-Tool.git
 2. 安装依赖  
    pip install -r requirements.txt  
-## 
+## 项目结构
 1. 主程序  
   camera_test_tool.py     
-2. 测试报告目录
-   reports/            
+2. 测试报告目录 reports              
      camera_test_report.html  
      camera_test_report.txt  
      camera_test_report.csv  
 3. 测试图像  
   test_image.jpg
+4. .gitignore
